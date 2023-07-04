@@ -106,7 +106,7 @@ gs://ca-qulijing-edu-test/test#1688432431213768
 gs://ca-qulijing-edu-test/test#1688449041076024
 ```
 
-## Objext Versioning
+## Object Versioning
 objectを上書きするとき、元のオブジェクトを履歴として保存
 1. versioningを有効にする
 ```bash
