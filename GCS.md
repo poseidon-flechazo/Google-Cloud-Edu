@@ -118,6 +118,7 @@ gcloud storage buckets update gs://ca-qulijing-edu-test --versioning
   Completed 1
 ```
 ここで、`--versioning`は有効となる
+
 2. 新たな変更をupdateしてみる
 - 今日の日付と内容を追加する
 ```bash
