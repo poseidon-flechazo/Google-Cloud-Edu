@@ -253,6 +253,7 @@ cloud_sql_proxy -instances=ca-qulijing-edu:asia-northeast1:postgresql15=tcp:5432
 ...
 ```
 それで、proxyを起動しているとわかる
+
 4. 別のターミナルから`pgcli`で接続
 ```bash
 pgcli -h localhost -p 5432 -u celery -d postgres -W
