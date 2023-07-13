@@ -67,6 +67,7 @@ gcloud pubsub subscriptions pull --auto-ack projects/プロジェクト名/subsc
 
 ---
 ## 2. GCSのPubSub Notification
+Pub/Sub Notificationはパケットに対して、新しいオブジェクト（ファイル）と新規作成したり、削除したりしたら、通知してくれる機能
 ### notificationsを有効化
 ```bash
 gcloud storage buckets notifications create gs://バケット名 \
@@ -112,6 +113,7 @@ gcloud pubsub subscriptions pull --auto-ack projects/プロジェクト名/subsc
 ## 3. Cloud RUN
 コンテナイメージをデプロイするだけで、HTTPリクエストを受け付けるWebサービスを作成できるサービス
 ### コンテナアプリケーションの作成
+`nginx`は公開されているコンテナイメージで、注目して欲しいのがポート番号は${80}$番
 ```bash
 gcloud run deploy nginx 
  --image=nginx:stable-alpine 
@@ -136,18 +138,37 @@ Service URL: https://nginx-fxmln72kfq-an.a.run.app
 >- --set-env-vars, --env-var-file
 ---
 ### Artifact Registryを利用したコンテナイメージの管理
-ローカル環境にはDockerがインストールされないため、CloudShellで実行
-1. repositryを作成
+- Artifact Registryとrepositryとは
+  - Artifact registry：レジストリはコンテナイメージを保存・管理する**サービス**
+    - Container Registryとの違い：Artifact RegistryはContainer Registryの拡張としてコンテナイメージとコンテナ以外のアーティファクトもサポートできる
+    - 他のサービス
+      - Docker Hub
+      - Quay.ioなど
+  - repositry：リポジトリは`nginx`などの**イメージが保管される場所**
+    - Rigistryというサービスの中に、それぞれのイメージの集まりはrepositryにある
+    - GitHubのrepositryはイメージしやすい
 
-Artifact Registryにコンテナイメージを保存するため
+1. repositryを作成
 ```bash
 gcloud artifacts repositories create リポジトリ名 --repository-format=docker --location=asia-northeast1
 ```
+結果：
+```
+Create request issued for: [リポジトリ名]
+Waiting for operation [projects/プロジェクト名/l
+ocations/asia-northeast1/operations/07372454-365d
+-4b01-91ac-919a90d098a8] to complete...done.
+Created repository [リポジトリ名].
+```
 ---
-2. レジストリから`nginx:stable-alpine`イメージを取得
+2. レジストリから`nginx:stable-alpine`イメージを取得（初めての時）
+
+`nginx`は公開されているので、gitと同様に`pull`で取ってくる
 ```bash
 docker pull nginx:stable-alpine
 ```
+> ローカル環境にはDockerがインストールされないため、CloudShellで実行
+
 結果：
 ```
 stable-alpine: Pulling from library/nginx
@@ -165,12 +186,17 @@ docker.io/library/nginx:stable-alpine
 ---
 3. `docker tag`で名前変更
 
-コンテナのイメージ名は`LOCATION-docker.pkg.dev/プロジェクト名/リポジトリ名/イメージ名:タグ`というフォーマットで指定する必要があるので、tagでイメージ名を変更する
+コンテナのイメージ名は`LOCATION-docker.pkg.dev/プロジェクト名/リポジトリ名/イメージ名:タグ`というフォーマットで指定する必要があるので、`tag`でイメージ名を変更する
+
 ```bash
 docker tag nginx:stable-alpine asia-northeast1-docker.pkg.dev/プロジェクト名/リポジトリ/nginx:stable-alpine
 ```
+> ローカル環境にはDockerがインストールされないため、CloudShellで実行
 
+---
 4. 認証
+
+dockerコマンドがGoogle Cloudに認証するため
 ```bash
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 ```
@@ -178,36 +204,40 @@ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 ```
 Adding credentials for: asia-northeast1-docker.pkg.dev
 ```
-
+---
 5. Docker Run
 ```bash
 docker run -d -p 127.0.0.1:8080:80 nginx:stable-alpine
 ```
+- `-d`はコンテナーをバックグラウンド実行し、コンテナーIDを出力するって意味
+- `-p`はコンテナのポート`8080`を`127.0.0.1`上の`80`ボートにバインド（割り当て）するって意味
+
+> ローカル環境にはDockerがインストールされないため、CloudShellで実行
+
 結果：
 ```
 df0b7c7003a45d75cd32a782eee8d4eccdd49f59100df784e38d3c6a9dc29791
 ```
+長い謎文字列はコンテナID
 
+---
 6. ローカルホストでアクセスできるか確認
 ```bash
 curl localhost:8080
 ```
-
-7. 認証
-
-dockerがgcloudを利用してArtifact Registryへ認証を行えるように
-```bash
-gcloud auth configure-docker asia-northeast1-docker.pkg.dev
-```
-8. push
+---
+7. push
 
 Artifact Registryへイメージをpushする準備を完了、pushする
 ```bash
 docker push asia-northeast1-docker.pkg.dev/プロジェクト名/リポジトリ名/nginx:stable-alpine
 ```
-
+> ローカル環境にはDockerがインストールされないため、CloudShellで実行
 ---
+
 ### Serviceの認証と公開範囲
+デフォルトで認証なしで公開されるのはよくないが、ユーザ認証と交換範囲を指定すれば良い
+
 1. サービスの公開アクセス設定を取り除き
 ```bash
 gcloud run services remove-iam-policy-binding nginx \
@@ -240,8 +270,10 @@ version: 1
 ```
 
 3. 確認
+
+普通に`curl`してリクエストしてもアクセスできないはず
 ```bash
-curl -I https://nginx-fxmln72kfq-an.a.run.app/
+curl -I https://nginx-自分のサービスURL.a.run.app/
 ```
 結果：
 ```
@@ -252,11 +284,14 @@ server: Google Frontend
 content-length: 295
 ```
 4. id tokenを加えてリクエスト
-- `gcloud auth print-identity-token`で取ってくる文字列はid token
-- 最も広く使われているJSON形式のフォーマットは**jwt**と書いて「ジョット」と読む
+
+自分の認証情報を加えるとアクセスできる
 ```bash
 curl -I -H "Authorization: Bearer $(gcloud auth print-identity-token)" https://nginx-fxmln72kfq-an.a.run.app
 ```
+- `gcloud auth print-identity-token`で取ってくる文字列はid token
+- 最も広く使われているJSON形式のフォーマットは**jwt**と書いて「ジョット」と読む
+
 結果：
 ```
 HTTP/2 200 
@@ -270,3 +305,31 @@ date: Tue, 11 Jul 2023 05:39:30 GMT
 server: Google Frontend
 ```
 
+### Severless Network Endpoint Group
+Cloud RunのサービスをGCLBのBackend Serviceとして利用可能
+
+1. NEGの作成
+```bash
+gcloud compute network-endpoint-groups create nginx-serverless-neg \
+    --region=asia-northeast1 \
+    --network-endpoint-type=serverless  \
+    --cloud-run-service=nginx
+```
+結果：
+```
+Created [https://www.googleapis.com/compute/v1/projects/プロジェクト名/regions/asia-northeast1/networkEndpointGroups/nginx-serverless-neg].
+Created network endpoint group [nginx-serverless-neg].
+```
+---
+2. backend-serviceの作成
+```
+gcloud compute backend-services create nginx-backend-service \
+    --global \
+    --load-balancing-scheme=EXTERNAL_MANAGED
+```
+結果：
+```
+Created [https://www.googleapis.com/compute/v1/projects/プロジェクト名/global/backendServices/nginx-backend-service].
+NAME                   BACKENDS  PROTOCOL
+nginx-backend-service            HTTP
+```
