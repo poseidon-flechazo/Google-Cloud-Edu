@@ -5,7 +5,7 @@
 ### CI/CDパイプライン
 一文でいうと、プロジェクトで作業をトリガーする際に実行する一連のプロセスの集まり
 - CI: 継続的インテグレーション
-    - 流れ：plan→code→build→test
+    - plan→code→build→test
 - CD: 継続的デプロイメント
     - release→deploy→(hold)→operate→monitor
 
