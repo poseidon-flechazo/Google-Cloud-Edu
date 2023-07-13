@@ -151,6 +151,8 @@ cat test
 ## 4. Cloud SQL
 
 ### SQLインスタンス作成
+厳密に言うと、SQLのサーバを実行するCompute Engine VM instanceだと認識して良い
+
 #### 新規
 ```bash
 gcloud sql instances create postgresql15 \
