@@ -113,7 +113,7 @@ gcloud pubsub subscriptions pull --auto-ack projects/プロジェクト名/subsc
 ## 3. Cloud RUN
 コンテナイメージをデプロイするだけで、HTTPリクエストを受け付けるWebサービスを作成できるサービス
 ### コンテナアプリケーションの作成
-`nginx`は公開されているコンテナイメージで、注目して欲しいのがポート番号は${80}$番
+`nginx`は公開されているコンテナイメージで、注目して欲しいのがポート番号は$80$番
 ```bash
 gcloud run deploy nginx 
  --image=nginx:stable-alpine 
