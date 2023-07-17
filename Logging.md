@@ -8,6 +8,7 @@
 1. expressサービスをデプロイ
 
 `Artifact Registry`に作成したリポジトリ（図のリポジトリは`cloudbuild`）に入って、`express`を選択し、最新のイメージを`Cloud Run`にデプロイする
+
 ![express deploy](/image/logging-1.png)
 
 `Cloud Run`で確認できる
