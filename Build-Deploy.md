@@ -24,7 +24,7 @@
     - Dockerfile
     - cloudbuild.yaml：ビルド構成ファイル
 
-`indxe.js`
+`index.js`
 ```js
 const express = require('express');
 const app = express();
